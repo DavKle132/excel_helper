@@ -4,8 +4,10 @@ import tkinter.ttk as ttk
 from tkinter import filedialog, Button
 
 root = tk.Tk()
-global rep
-rep = []
+global file_list
+file_list = []
+global file_names
+file_names = []
 
 
 def main():
@@ -16,33 +18,43 @@ def main():
     # wb = modify_workbook(wb)
     # wb.save('test.xlsx')
 
-
+'''
+The code below handles the GUI
+'''
 def start_gui():
     style = ttk.Style(root)
     style.theme_use("clam")
 
     select_file = Button(root, text="Select files to convert", command=show_file_chooser)
-    select_file.grid(row=0, padx=40, pady=2)
+    select_file.grid(row=1, padx=40, pady=2)
 
     convert = Button(root, text="Convert files", command=check_and_modify)
-    convert.grid(row=1, padx=4, pady=2)
+    convert.grid(row=2, padx=4, pady=2)
+
     root.mainloop()
 
 def show_file_chooser():
-    global rep
-    rep = filedialog.askopenfilenames(parent=root, initialdir='/', initialfile='tmp', filetypes=[("XLSX", "*.xlsx"), ("All files", "*")])
-    if rep != None:
-        pass
-    return rep
+    global file_list
+    global file_names
+    file_list = filedialog.askopenfilenames(parent=root, initialdir='/', initialfile='tmp', filetypes=[("XLSX", "*.xlsx"), ("All files", "*")])
+    for file in file_list:
+        name = file.split('/')[len(file.split('/')) - 1]
+        file_names.append(name)
+    return file_list
 
 def check_and_modify():
-    global rep
-    for file in rep:
+    global file_list
+    for file in file_list:
         wb = openpyxl.load_workbook(file)
+        name = file.split('/')[len(file.split('/')) - 1]
         if is_workbook(wb):
-            print(file + 'converting')
+            print(name + '\nConverting...\n')
             wb = modify_workbook(wb)
             wb.save(file.split('.xlsx')[0] + '_converted.xlsx')
+        else:
+            print(name + "\nWas not recognized\n")
+
+    print('Complete!')
 
 '''
 The code below is for determining if a given wb is the correct type to convert
@@ -54,7 +66,6 @@ then it calls sheet specific checks.
 '''
 def is_workbook(wb):
     sheets = wb.sheetnames
-    print(sheets)
     if not sheets[0] == 'Collection' or not sheets[1] == 'Images' or not sheets[2] == 'POA Measurements':
         return False
     elif not is_collection(wb['Collection']):
@@ -64,7 +75,6 @@ def is_workbook(wb):
     elif not is_poa_measurements(wb['POA Measurements']):
         return False
     else:
-        print('workbook!')
         return True
 
 def is_collection(ws):
@@ -74,7 +84,6 @@ def is_collection(ws):
     if not a1 == 'collectionId' or not i1 == 'Pole ID' or not v1 == 'Photo Measure.altitude':
         return False
     else:
-        print('collection!')
         return True
 
 def is_images(ws):
@@ -84,7 +93,6 @@ def is_images(ws):
     if not c1 == 'type' or not k1 == 'compositeImageUrl'or not r1 == 'distance.display':
         return False
     else:
-        print('images!')
         return True
 
 def is_poa_measurements(ws):
@@ -94,7 +102,6 @@ def is_poa_measurements(ws):
     if not a1 == 'collectionId' or not f1 == 'POA Height' or not h1 == 'Comments':
         return False
     else:
-        print('poa!')
         return True
 
 
